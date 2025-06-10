@@ -21,6 +21,11 @@ public class AstPrinterRPN implements Expr.Visitor<String> {
     }
 
     @Override
+    public String visitConditionalExpr(Expr.Conditional expr) {
+        return print(expr.getExpr()) + "? " + print(expr.getThenBranch()) + " : " + print(expr.getElseBranch());
+    }
+
+    @Override
     public String visitBinaryExpr(Expr.Binary expr) {
         return parenthesize(expr.getOperator().getLexeme(), expr.getLeft(), expr.getRight());
     }

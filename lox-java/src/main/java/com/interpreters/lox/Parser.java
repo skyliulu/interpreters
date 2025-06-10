@@ -3,13 +3,20 @@ package com.interpreters.lox;
 import java.util.List;
 
 /**
- * expression     → equality ;
+ * expression     → comma ;
+ * comma          → conditional ( "," conditional )* ;
+ * conditional    → equality ("?" expression ":" conditional)?;
  * equality       → comparison ( ( "!=" | "==" ) comparison )* ;
  * comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
  * term           → factor ( ( "-" | "+" ) factor )* ;
  * factor         → unary ( ( "/" | "*" ) unary )* ;
  * unary          → ( "!" | "-" ) unary | primary ;
- * primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
+ * primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
+ * // error productions
+ * | ( "!=" | "==" ) equality
+ * | ( ">" | ">=" | "<" | "<=" ) comparison
+ * | "+" term
+ * | ( "/" | "*" ) factor;
  */
 public class Parser {
     private final List<Token> tokens;
@@ -30,7 +37,32 @@ public class Parser {
 
     // expression     → equality ;
     private Expr expression() {
-        return equality();
+        return comma();
+    }
+
+    // challenges 6.1
+    // comma          → conditional ( "," conditional )* ;
+    private Expr comma() {
+        Expr expr = conditional();
+        while (match(TokenType.COMMA)) {
+            Token operator = previous();
+            Expr right = conditional();
+            expr = new Expr.Binary(expr, operator, right);
+        }
+        return expr;
+    }
+
+    // challenges 6.2
+    // conditional    → equality "?" expression ":" conditional ;
+    private Expr conditional() {
+        Expr expr = equality();
+        if (match(TokenType.QUESTION)) {
+            Expr thenBranch = expression();
+            consume(TokenType.COLON, "Expect ':' after then branch of conditional expression.");
+            Expr elseBranch = conditional();
+            expr = new Expr.Conditional(expr, thenBranch, elseBranch);
+        }
+        return expr;
     }
 
     // equality       → comparison ( ( "!=" | "==" ) comparison )* ;
@@ -87,7 +119,19 @@ public class Parser {
         return primary();
     }
 
-    // primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
+    /**
+     *      primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
+     *      | ( "!=" | "==" ) equality
+     *      | ( ">" | ">=" | "<" | "<=" ) comparison
+     *      | "+" term
+     *      | ( "/" | "*" ) factor;
+     * challenge 6.3
+     * With the normal infix productions, the operand non-terminals are one precedence level higher than the operator's own precedence.
+     * In order to handle a series of operators of the same precedence, the rules explicitly allow repetition.
+     * With the error productions, though, the right-hand operand rule is the same precedence level.
+     * That will effectively strip off the erroneous leading operator and then consume a series of infix uses of operators at the same level by reusing the existing correct rule.
+     * @return
+     */
     private Expr primary() {
         if (match(TokenType.NUMBER, TokenType.STRING)) {
             return new Expr.Literal(previous().getLiteral());
@@ -105,6 +149,27 @@ public class Parser {
             Expr expr = expression();
             consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.");
             return new Expr.Grouping(expr);
+        }
+        // error production
+        if (match(TokenType.EQUAL_EQUAL, TokenType.BANG_EQUAL)) {
+            error(previous(), "Missing left-hand operand");
+            equality();
+            return null;
+        }
+        if (match(TokenType.LESS, TokenType.LESS_EQUAL, TokenType.GREATER, TokenType.GREATER_EQUAL)) {
+            error(previous(), "Missing left-hand operand");
+            comparison();
+            return null;
+        }
+        if (match(TokenType.PLUS)) {
+            error(previous(), "Missing left-hand operand");
+            term();
+            return null;
+        }
+        if (match(TokenType.SLASH, TokenType.STAR)) {
+            error(previous(), "Missing left-hand operand");
+            factor();
+            return null;
         }
         throw error(peek(), "Expect expression.");
     }
