@@ -130,7 +130,6 @@ public class Parser {
      * In order to handle a series of operators of the same precedence, the rules explicitly allow repetition.
      * With the error productions, though, the right-hand operand rule is the same precedence level.
      * That will effectively strip off the erroneous leading operator and then consume a series of infix uses of operators at the same level by reusing the existing correct rule.
-     * @return
      */
     private Expr primary() {
         if (match(TokenType.NUMBER, TokenType.STRING)) {
