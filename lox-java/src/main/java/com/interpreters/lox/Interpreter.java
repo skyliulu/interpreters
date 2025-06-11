@@ -30,10 +30,11 @@ public class Interpreter implements Expr.Visitor<Object> {
                 if (left instanceof Double leftDouble && right instanceof Double rightDouble) {
                     return leftDouble + rightDouble;
                 }
-                if (left instanceof String leftString && right instanceof String rightString) {
-                    return leftString + rightString;
+                // challenge 7.2
+                if (left instanceof String || right instanceof String) {
+                    return stringify(left) + stringify(right);
                 }
-                throw new RuntimeError(expr.getOperator(), "Operands must be two numbers or two strings.");
+                throw new RuntimeError(expr.getOperator(), "Operands must be two numbers or two strings or at least one strings.");
             }
             case MINUS -> {
                 checkNumberOperand(expr.getOperator(), left, right);
@@ -45,6 +46,8 @@ public class Interpreter implements Expr.Visitor<Object> {
             }
             case SLASH -> {
                 checkNumberOperand(expr.getOperator(), left, right);
+                // challenge 7.3
+                checkDivideZero(expr.getOperator(), right);
                 return (double) left / (double) right;
             }
             case GREATER -> {
@@ -120,6 +123,12 @@ public class Interpreter implements Expr.Visitor<Object> {
             return false;
         }
         return a.equals(b);
+    }
+
+    private void checkDivideZero(Token operator, Object right) {
+        if (right instanceof Double doubleRight && doubleRight.compareTo(0.0) == 0) {
+            throw new RuntimeError(operator, "Cannot divide by zero");
+        }
     }
 
     private void checkNumberOperand(Token operator, Object operand) {
