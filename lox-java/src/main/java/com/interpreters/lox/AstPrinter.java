@@ -1,6 +1,14 @@
 package com.interpreters.lox;
 
-public class AstPrinter implements Expr.Visitor<String> {
+import java.util.List;
+
+public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
+
+    public String print(List<Stmt> stmts) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stmts.forEach(stmt -> stringBuilder.append(stmt.accept(this)).append("\n"));
+        return stringBuilder.toString();
+    }
 
     public String print(Expr expr) {
         return expr.accept(this);
@@ -33,6 +41,16 @@ public class AstPrinter implements Expr.Visitor<String> {
     @Override
     public String visitUnaryExpr(Expr.Unary expr) {
         return parenthesize(expr.getOperator().getLexeme(), expr.getRight());
+    }
+
+    @Override
+    public String visitExpressionStmt(Stmt.Expression stmt) {
+        return print(stmt.getExpression()) + ";";
+    }
+
+    @Override
+    public String visitPrintStmt(Stmt.Print stmt) {
+        return "print " + print(stmt.getExpression()) + ";";
     }
 
     private String parenthesize(String name, Expr... exprs) {

@@ -1,8 +1,13 @@
 package com.interpreters.lox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * program        → statement* EOF ;
+ * statement      → exprStmt | printStmt ;
+ * exprStmt       → expression ";" ;
+ * printStmt      → "print" expression ";" ;
  * expression     → comma ;
  * comma          → conditional ( "," conditional )* ;
  * conditional    → equality ("?" expression ":" conditional)?;
@@ -26,13 +31,33 @@ public class Parser {
         this.tokens = tokens;
     }
 
-    public Expr parse() {
-        try {
-            return expression();
-        } catch (ParseError error) {
-            // todo error recovery
-            return null;
+    public List<Stmt> parse() {
+        List<Stmt> stmts = new ArrayList<>();
+        while (!isAtEnd()) {
+            stmts.add(statement());
         }
+        return stmts;
+    }
+
+    private Stmt statement() {
+        if (match(TokenType.PRINT)) {
+            return printStatement();
+        }
+        return expressionStatement();
+    }
+
+    // printStmt      → "print" expression ";" ;
+    private Stmt printStatement() {
+        Expr expr = expression();
+        consume(TokenType.SEMICOLON, "Expect ';' after value.");
+        return new Stmt.Print(expr);
+    }
+
+    // exprStmt       → expression ";" ;
+    private Stmt expressionStatement() {
+        Expr expr = expression();
+        consume(TokenType.SEMICOLON, "Expect ';' after expression.");
+        return new Stmt.Expression(expr);
     }
 
     // expression     → equality ;
@@ -120,11 +145,11 @@ public class Parser {
     }
 
     /**
-     *      primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
-     *      | ( "!=" | "==" ) equality
-     *      | ( ">" | ">=" | "<" | "<=" ) comparison
-     *      | "+" term
-     *      | ( "/" | "*" ) factor;
+     * primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
+     * | ( "!=" | "==" ) equality
+     * | ( ">" | ">=" | "<" | "<=" ) comparison
+     * | "+" term
+     * | ( "/" | "*" ) factor;
      * challenge 6.3
      * With the normal infix productions, the operand non-terminals are one precedence level higher than the operator's own precedence.
      * In order to handle a series of operators of the same precedence, the rules explicitly allow repetition.

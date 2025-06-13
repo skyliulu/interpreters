@@ -2,6 +2,8 @@ package com.interpreters.lox;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class InterpreterTest {
@@ -21,5 +23,8 @@ class InterpreterTest {
                         new Expr.Literal(3.0)));
         Interpreter interpreter = new Interpreter();
         interpreter.interpret(expression);
+
+        Stmt printStmt = new Stmt.Print(expression);
+        interpreter.interpret(List.of(printStmt));
     }
 }

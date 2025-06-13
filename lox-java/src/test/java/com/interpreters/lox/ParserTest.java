@@ -14,10 +14,11 @@ class ParserTest {
         tokens.add(new Token(TokenType.NUMBER, "1", 1, 1));
         tokens.add(new Token(TokenType.PLUS, "+", null, 1));
         tokens.add(new Token(TokenType.NUMBER, "2", 2, 1));
+        tokens.add(new Token(TokenType.SEMICOLON, ";", null, 1));
         tokens.add(new Token(TokenType.EOF, "", null, 1));
         Parser parser = new Parser(tokens);
-        Expr expression = parser.parse();
+        List<Stmt> stmts = parser.parse();
         AstPrinter printer = new AstPrinter();
-        assertEquals("(+ 1 2)", printer.print(expression));
+        assertEquals("(+ 1 2);", printer.print(stmts));
     }
 }
