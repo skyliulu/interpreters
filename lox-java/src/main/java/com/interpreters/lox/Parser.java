@@ -7,9 +7,10 @@ import java.util.List;
  * program        → declaration* EOF ;
  * declaration    → varDecl | statement;
  * valDecl        → "var" IDENTIFIER (“=” expression)?";" ;
- * statement      → exprStmt | printStmt ;
+ * statement      → exprStmt | printStmt | block ;
  * exprStmt       → expression ";" ;
  * printStmt      → "print" expression ";" ;
+ * block          → "{" declaration* "}" ;
  * expression     → assignment ;
  * assignment     → identifier "=" assignment | comma ;
  * comma          → conditional ( "," conditional )* ;
@@ -67,11 +68,23 @@ public class Parser {
         return new Stmt.Var(token, initialize);
     }
 
+    // statement      → exprStmt | printStmt | block ;
     private Stmt statement() {
         if (match(TokenType.PRINT)) {
             return printStatement();
+        } else if (match(TokenType.LEFT_BRACE)) {
+            return block();
         }
         return expressionStatement();
+    }
+
+    private Stmt block() {
+        List<Stmt> stmts = new ArrayList<>();
+        while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            stmts.add(declaration());
+        }
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after block.");
+        return new Stmt.Block(stmts);
     }
 
     // printStmt      → "print" expression ";" ;

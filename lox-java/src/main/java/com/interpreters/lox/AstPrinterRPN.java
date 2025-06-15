@@ -81,6 +81,11 @@ public class AstPrinterRPN implements Expr.Visitor<String>, Stmt.Visitor<String>
         return "";
     }
 
+    @Override
+    public String visitBlockStmt(Stmt.Block stmt) {
+        return "";
+    }
+
     private String parenthesize(String name, Expr... exprs) {
         StringBuilder builder = new StringBuilder();
         for (Expr expr : exprs) {

@@ -10,6 +10,8 @@ public abstract class Stmt {
 
 		R visitVarStmt(Var stmt);
 
+		R visitBlockStmt(Block stmt);
+
 	}
 
 
@@ -71,6 +73,24 @@ public abstract class Stmt {
 
 		public Expr getInitializer() {
 			return initializer;
+		}
+
+	}
+
+	public static class Block extends Stmt {
+		private final List<Stmt> statements;
+
+		public Block(List<Stmt> statements) {
+			this.statements = statements;
+		}
+
+		@Override
+		public <R> R accept(Visitor<R> visitor) {
+			return visitor.visitBlockStmt(this);
+		}
+
+		public List<Stmt> getStatements() {
+			return statements;
 		}
 
 	}
