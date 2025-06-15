@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Environment {
+    private static final Object uninitialized = new Object();
     private final Environment enclosing;
     private final Map<String, Object> values = new HashMap<>();
 
@@ -17,7 +18,7 @@ public class Environment {
     }
 
     public void define(String name, Object value) {
-        values.put(name, value);
+        values.put(name, null == value ? uninitialized : value);
     }
 
     public void assign(Token name, Object value) {
@@ -33,7 +34,11 @@ public class Environment {
 
     public Object get(Token name) {
         if (values.containsKey(name.getLexeme())) {
-            return values.get(name.getLexeme());
+            Object value = values.get(name.getLexeme());
+            // challenge 8.2
+            if (uninitialized == value) {
+                throw new RuntimeError(name, "Variable must be initialized before use.");
+            }
         }
         if (null != enclosing) {
             return enclosing.get(name);
