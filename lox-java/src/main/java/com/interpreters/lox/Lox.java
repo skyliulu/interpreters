@@ -57,8 +57,8 @@ public class Lox {
         if (hadError) {
             return;
         }
-//        AstPrinter printer = new AstPrinter();
-//        System.out.println(printer.print(stmts));
+        AstPrinter printer = new AstPrinter();
+        System.out.println(printer.print(stmts));
         interpreter.interpret(stmts);
         if (hadRuntimeError) {
             return;

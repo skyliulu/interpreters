@@ -4,6 +4,8 @@ import java.util.List;
 
 public abstract class Expr {
 	public interface Visitor<R> {
+		R visitAssignmentExpr(Assignment expr);
+
 		R visitConditionalExpr(Conditional expr);
 
 		R visitBinaryExpr(Binary expr);
@@ -14,10 +16,36 @@ public abstract class Expr {
 
 		R visitUnaryExpr(Unary expr);
 
+		R visitVariableExpr(Variable expr);
+
 	}
 
 
 	abstract <R> R accept(Visitor<R> visitor);
+
+	public static class Assignment extends Expr {
+		private final Token name;
+		private final Expr value;
+
+		public Assignment(Token name, Expr value) {
+			this.name = name;
+			this.value = value;
+		}
+
+		@Override
+		public <R> R accept(Visitor<R> visitor) {
+			return visitor.visitAssignmentExpr(this);
+		}
+
+		public Token getName() {
+			return name;
+		}
+
+		public Expr getValue() {
+			return value;
+		}
+
+	}
 
 	public static class Conditional extends Expr {
 		private final Expr expr;
@@ -135,6 +163,24 @@ public abstract class Expr {
 
 		public Expr getRight() {
 			return right;
+		}
+
+	}
+
+	public static class Variable extends Expr {
+		private final Token name;
+
+		public Variable(Token name) {
+			this.name = name;
+		}
+
+		@Override
+		public <R> R accept(Visitor<R> visitor) {
+			return visitor.visitVariableExpr(this);
+		}
+
+		public Token getName() {
+			return name;
 		}
 
 	}

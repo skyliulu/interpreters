@@ -4,6 +4,8 @@ import java.util.List;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
+    private final Environment environment = new Environment();
+
     public void interpret(Expr expr) {
         try {
             Object value = evaluate(expr);
@@ -21,6 +23,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         } catch (RuntimeError error) {
             Lox.runtimeError(error);
         }
+    }
+
+    @Override
+    public Object visitAssignmentExpr(Expr.Assignment expr) {
+        Object value = evaluate(expr.getValue());
+        environment.assign(expr.getName(), value);
+        return null;
     }
 
     @Override
@@ -114,6 +123,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Object visitVariableExpr(Expr.Variable expr) {
+        return environment.get(expr.getName());
+    }
+
+    @Override
     public Void visitExpressionStmt(Stmt.Expression stmt) {
         evaluate(stmt.getExpression());
         return null;
@@ -123,6 +137,16 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Void visitPrintStmt(Stmt.Print stmt) {
         Object object = evaluate(stmt.getExpression());
         System.out.println(stringify(object));
+        return null;
+    }
+
+    @Override
+    public Void visitVarStmt(Stmt.Var stmt) {
+        Object value = null;
+        if (null != stmt.getInitializer()) {
+            value = evaluate(stmt.getInitializer());
+        }
+        environment.define(stmt.getName().getLexeme(), value);
         return null;
     }
 

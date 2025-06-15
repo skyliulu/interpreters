@@ -8,6 +8,8 @@ public abstract class Stmt {
 
 		R visitPrintStmt(Print stmt);
 
+		R visitVarStmt(Var stmt);
+
 	}
 
 
@@ -45,6 +47,30 @@ public abstract class Stmt {
 
 		public Expr getExpression() {
 			return expression;
+		}
+
+	}
+
+	public static class Var extends Stmt {
+		private final Token name;
+		private final Expr initializer;
+
+		public Var(Token name, Expr initializer) {
+			this.name = name;
+			this.initializer = initializer;
+		}
+
+		@Override
+		public <R> R accept(Visitor<R> visitor) {
+			return visitor.visitVarStmt(this);
+		}
+
+		public Token getName() {
+			return name;
+		}
+
+		public Expr getInitializer() {
+			return initializer;
 		}
 
 	}

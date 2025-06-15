@@ -4,11 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * program        → statement* EOF ;
+ * program        → declaration* EOF ;
+ * declaration    → varDecl | statement;
+ * valDecl        → "var" IDENTIFIER (“=” expression)?";" ;
  * statement      → exprStmt | printStmt ;
  * exprStmt       → expression ";" ;
  * printStmt      → "print" expression ";" ;
- * expression     → comma ;
+ * expression     → assignment ;
+ * assignment     → identifier "=" assignment | comma ;
  * comma          → conditional ( "," conditional )* ;
  * conditional    → equality ("?" expression ":" conditional)?;
  * equality       → comparison ( ( "!=" | "==" ) comparison )* ;
@@ -16,7 +19,7 @@ import java.util.List;
  * term           → factor ( ( "-" | "+" ) factor )* ;
  * factor         → unary ( ( "/" | "*" ) unary )* ;
  * unary          → ( "!" | "-" ) unary | primary ;
- * primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
+ * primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER
  * // error productions
  * | ( "!=" | "==" ) equality
  * | ( ">" | ">=" | "<" | "<=" ) comparison
@@ -34,9 +37,34 @@ public class Parser {
     public List<Stmt> parse() {
         List<Stmt> stmts = new ArrayList<>();
         while (!isAtEnd()) {
-            stmts.add(statement());
+            stmts.add(declaration());
         }
         return stmts;
+    }
+
+    // declaration    → varDecl | statement;
+    private Stmt declaration() {
+        try {
+            if (match(TokenType.VAR)) {
+                return varDecl();
+            } else {
+                return statement();
+            }
+        } catch (ParseError error) {
+            synchronize();
+            return null;
+        }
+    }
+
+    // valDecl        → "var" IDENTIFIER (“=” expression)?";" ;
+    private Stmt varDecl() {
+        Token token = consume(TokenType.IDENTIFIER, "Expect variable name");
+        Expr initialize = null;
+        if (match(TokenType.EQUAL)) {
+            initialize = expression();
+        }
+        consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.");
+        return new Stmt.Var(token, initialize);
     }
 
     private Stmt statement() {
@@ -62,7 +90,22 @@ public class Parser {
 
     // expression     → equality ;
     private Expr expression() {
-        return comma();
+        return assignment();
+    }
+
+    // assignment     → identifier "=" assignment | comma ;
+    private Expr assignment() {
+        Expr expr = comma();
+        if (match(TokenType.EQUAL)) {
+            Token equals = previous();
+            Expr value = assignment();
+            // valid left expr
+            if (expr instanceof Expr.Variable variable) {
+                return new Expr.Assignment(variable.getName(), value);
+            }
+            error(equals, "Invalid assignment target.");
+        }
+        return expr;
     }
 
     // challenges 6.1
@@ -145,7 +188,7 @@ public class Parser {
     }
 
     /**
-     * primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
+     * primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | identifier
      * | ( "!=" | "==" ) equality
      * | ( ">" | ">=" | "<" | "<=" ) comparison
      * | "+" term
@@ -173,6 +216,9 @@ public class Parser {
             Expr expr = expression();
             consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.");
             return new Expr.Grouping(expr);
+        }
+        if (match(TokenType.IDENTIFIER)) {
+            return new Expr.Variable(previous());
         }
         // error production
         if (match(TokenType.EQUAL_EQUAL, TokenType.BANG_EQUAL)) {
