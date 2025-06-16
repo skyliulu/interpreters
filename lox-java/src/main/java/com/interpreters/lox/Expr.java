@@ -6,7 +6,7 @@ public abstract class Expr {
 	public interface Visitor<R> {
 		R visitAssignmentExpr(Assignment expr);
 
-		R visitConditionalExpr(Conditional expr);
+		R visitTernaryExpr(Ternary expr);
 
 		R visitBinaryExpr(Binary expr);
 
@@ -17,6 +17,8 @@ public abstract class Expr {
 		R visitUnaryExpr(Unary expr);
 
 		R visitVariableExpr(Variable expr);
+
+		R visitLogicalExpr(Logical expr);
 
 	}
 
@@ -47,12 +49,12 @@ public abstract class Expr {
 
 	}
 
-	public static class Conditional extends Expr {
+	public static class Ternary extends Expr {
 		private final Expr expr;
 		private final Expr thenBranch;
 		private final Expr elseBranch;
 
-		public Conditional(Expr expr, Expr thenBranch, Expr elseBranch) {
+		public Ternary(Expr expr, Expr thenBranch, Expr elseBranch) {
 			this.expr = expr;
 			this.thenBranch = thenBranch;
 			this.elseBranch = elseBranch;
@@ -60,7 +62,7 @@ public abstract class Expr {
 
 		@Override
 		public <R> R accept(Visitor<R> visitor) {
-			return visitor.visitConditionalExpr(this);
+			return visitor.visitTernaryExpr(this);
 		}
 
 		public Expr getExpr() {
@@ -181,6 +183,36 @@ public abstract class Expr {
 
 		public Token getName() {
 			return name;
+		}
+
+	}
+
+	public static class Logical extends Expr {
+		private final Expr left;
+		private final Token operator;
+		private final Expr right;
+
+		public Logical(Expr left, Token operator, Expr right) {
+			this.left = left;
+			this.operator = operator;
+			this.right = right;
+		}
+
+		@Override
+		public <R> R accept(Visitor<R> visitor) {
+			return visitor.visitLogicalExpr(this);
+		}
+
+		public Expr getLeft() {
+			return left;
+		}
+
+		public Token getOperator() {
+			return operator;
+		}
+
+		public Expr getRight() {
+			return right;
 		}
 
 	}

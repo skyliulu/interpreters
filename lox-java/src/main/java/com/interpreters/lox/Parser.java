@@ -14,8 +14,10 @@ import java.util.List;
  * block          → "{" declaration* "}" ;
  * expression     → assignment ;
  * assignment     → identifier "=" assignment | comma ;
- * comma          → conditional ( "," conditional )* ;
- * conditional    → equality ("?" expression ":" conditional)?;
+ * comma          → ternary ( "," ternary )* ;
+ * ternary        → logic_or ("?" expression ":" ternary)?;
+ * logic_or       → logic_and ("or" logic_and)*;
+ * logic_and      → equality ("and" equality)*;
  * equality       → comparison ( ( "!=" | "==" ) comparison )* ;
  * comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
  * term           → factor ( ( "-" | "+" ) factor )* ;
@@ -138,28 +140,48 @@ public class Parser {
     }
 
     // challenges 6.1
-    // comma          → conditional ( "," conditional )* ;
+    // comma          → ternary ( "," ternary )* ;
     private Expr comma() {
-        Expr expr = conditional();
+        Expr expr = ternary();
         while (match(TokenType.COMMA)) {
             Token operator = previous();
-            Expr right = conditional();
+            Expr right = ternary();
             expr = new Expr.Binary(expr, operator, right);
         }
         return expr;
     }
 
     // challenges 6.2
-    // conditional    → equality "?" expression ":" conditional ;
-    private Expr conditional() {
-        Expr expr = equality();
+    // ternary        → logic_or ("?" expression ":" ternary)?;
+    private Expr ternary() {
+        Expr expr = logicOr();
         if (match(TokenType.QUESTION)) {
             Expr thenBranch = expression();
-            consume(TokenType.COLON, "Expect ':' after then branch of conditional expression.");
-            Expr elseBranch = conditional();
-            expr = new Expr.Conditional(expr, thenBranch, elseBranch);
+            consume(TokenType.COLON, "Expect ':' after then branch of ternary expression.");
+            Expr elseBranch = ternary();
+            expr = new Expr.Ternary(expr, thenBranch, elseBranch);
         }
         return expr;
+    }
+
+    // logic_or       → logic_and ("or" logic_and)*;
+    private Expr logicOr() {
+        Expr expr = logicAnd();
+        while (match(TokenType.OR)) {
+            Expr right = logicAnd();
+            expr = new Expr.Logical(expr, previous(), right);
+        }
+        return expr;
+    }
+
+    // logic_and      → equality ("and" equality)*;
+    private Expr logicAnd() {
+        Expr left = equality();
+        while (match(TokenType.AND)) {
+            Expr right = equality();
+            left = new Expr.Logical(left, previous(), right);
+        }
+        return left;
     }
 
     // equality       → comparison ( ( "!=" | "==" ) comparison )* ;

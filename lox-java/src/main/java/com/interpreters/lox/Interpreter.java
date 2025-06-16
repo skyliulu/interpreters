@@ -33,7 +33,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
-    public Object visitConditionalExpr(Expr.Conditional expr) {
+    public Object visitTernaryExpr(Expr.Ternary expr) {
         Object condition = evaluate(expr.getExpr());
         if (isTruthy(condition)) {
             return evaluate(expr.getThenBranch());
@@ -125,6 +125,18 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Object visitVariableExpr(Expr.Variable expr) {
         return environment.get(expr.getName());
+    }
+
+    @Override
+    public Object visitLogicalExpr(Expr.Logical expr) {
+        Object left = evaluate(expr.getLeft());
+        // short circuit
+        if (expr.getOperator().getTokenType() == TokenType.AND) {
+            if (!isTruthy(left)) return left;
+        } else if (expr.getOperator().getTokenType() == TokenType.OR) {
+            if (isTruthy(left)) return left;
+        }
+        return evaluate(expr.getRight());
     }
 
     @Override

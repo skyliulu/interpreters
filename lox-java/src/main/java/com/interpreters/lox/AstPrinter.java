@@ -19,7 +19,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
-    public String visitConditionalExpr(Expr.Conditional expr) {
+    public String visitTernaryExpr(Expr.Ternary expr) {
         return print(expr.getExpr()) + "? " + print(expr.getThenBranch()) + " : " + print(expr.getElseBranch());
     }
 
@@ -49,6 +49,11 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     @Override
     public String visitVariableExpr(Expr.Variable expr) {
+        return "";
+    }
+
+    @Override
+    public String visitLogicalExpr(Expr.Logical expr) {
         return "";
     }
 
