@@ -88,6 +88,11 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         }
     }
 
+    @Override
+    public String visitWhileStmt(Stmt.While stmt) {
+        return String.format("while (%s)\n\t%s", print(stmt.getCondition()), print(List.of(stmt.getBody())));
+    }
+
     private String parenthesize(String name, Expr... exprs) {
         StringBuilder builder = new StringBuilder();
         builder.append("(").append(name);

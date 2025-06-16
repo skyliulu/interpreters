@@ -187,6 +187,14 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return null;
     }
 
+    @Override
+    public Void visitWhileStmt(Stmt.While stmt) {
+        while (isTruthy(evaluate(stmt.getCondition()))) {
+            execute(stmt.getBody());
+        }
+        return null;
+    }
+
     private void execute(Stmt stmt) {
         stmt.accept(this);
     }

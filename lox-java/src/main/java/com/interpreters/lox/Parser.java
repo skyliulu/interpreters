@@ -7,10 +7,11 @@ import java.util.List;
  * program        → declaration* EOF ;
  * declaration    → varDecl | statement;
  * valDecl        → "var" IDENTIFIER (“=” expression)?";" ;
- * statement      → exprStmt | printStmt | ifStmt | block ;
+ * statement      → exprStmt | printStmt | ifStmt | whileStmt | block ;
  * exprStmt       → expression ";" ;
  * printStmt      → "print" expression ";" ;
  * ifStmt         → "if (" expression ") statement ("else" statement)?" ;
+ * whileStmt      → "while ("  expression ") statement;
  * block          → "{" declaration* "}" ;
  * expression     → assignment ;
  * assignment     → identifier "=" assignment | comma ;
@@ -71,7 +72,7 @@ public class Parser {
         return new Stmt.Var(token, initialize);
     }
 
-    // statement      → exprStmt | printStmt | ifStmt | block ;
+    // statement      → exprStmt | printStmt | ifStmt | whileStmt | block ;
     private Stmt statement() {
         if (match(TokenType.PRINT)) {
             return printStatement();
@@ -79,8 +80,19 @@ public class Parser {
             return block();
         } else if (match(TokenType.IF)) {
             return ifStmt();
+        } else if (match(TokenType.WHILE)) {
+            return whileStmt();
         }
         return expressionStatement();
+    }
+
+    // whileStmt      → "while ("  expression ") statement;
+    private Stmt whileStmt() {
+        consume(TokenType.LEFT_PAREN, "Expect '(' after while.");
+        Expr condition = expression();
+        consume(TokenType.RIGHT_PAREN, "Expect ')' after while condition");
+        Stmt body = statement();
+        return new Stmt.While(condition, body);
     }
 
     // ifStmt         → "if (" expression ") statement ("else" statement)?" ;

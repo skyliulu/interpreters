@@ -14,6 +14,8 @@ public abstract class Stmt {
 
 		R visitIfStmt(If stmt);
 
+		R visitWhileStmt(While stmt);
+
 	}
 
 
@@ -123,6 +125,30 @@ public abstract class Stmt {
 
 		public Stmt getElseStatement() {
 			return elseStatement;
+		}
+
+	}
+
+	public static class While extends Stmt {
+		private final Expr condition;
+		private final Stmt body;
+
+		public While(Expr condition, Stmt body) {
+			this.condition = condition;
+			this.body = body;
+		}
+
+		@Override
+		public <R> R accept(Visitor<R> visitor) {
+			return visitor.visitWhileStmt(this);
+		}
+
+		public Expr getCondition() {
+			return condition;
+		}
+
+		public Stmt getBody() {
+			return body;
 		}
 
 	}
