@@ -31,7 +31,8 @@ public class GenerateAst {
                 "Var: Token name, Expr initializer",
                 "Block: List<Stmt> statements",
                 "If: Expr condition, Stmt thenStatement, Stmt elseStatement",
-                "While: Expr condition, Stmt body"
+                "While: Expr condition, Stmt body",
+                "Break: "
         ));
     }
 
@@ -72,7 +73,12 @@ public class GenerateAst {
 
     private static void defineType(PrintWriter writer, String baseName, String className, String fieldList) {
         writer.println("\tpublic static class " + className + " extends " + baseName + " {");
-        String[] fields = fieldList.split(", ");
+        String[] fields;
+        if (fieldList.isEmpty()) {
+            fields = new String[0];
+        } else {
+            fields = fieldList.split(", ");
+        }
         for (String field : fields) {
             writer.println("\t\tprivate final " + field + ";");
         }

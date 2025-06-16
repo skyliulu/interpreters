@@ -181,7 +181,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Void visitIfStmt(Stmt.If stmt) {
         if (isTruthy(evaluate(stmt.getCondition()))) {
             execute(stmt.getThenStatement());
-        } else {
+        } else if (null != stmt.getElseStatement()) {
             execute(stmt.getElseStatement());
         }
         return null;
@@ -189,10 +189,19 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitWhileStmt(Stmt.While stmt) {
-        while (isTruthy(evaluate(stmt.getCondition()))) {
-            execute(stmt.getBody());
+        try {
+            while (isTruthy(evaluate(stmt.getCondition()))) {
+                execute(stmt.getBody());
+            }
+        } catch (BreakException breakException) {
+            // do nothing
         }
         return null;
+    }
+
+    @Override
+    public Void visitBreakStmt(Stmt.Break stmt) {
+        throw new BreakException();
     }
 
     private void execute(Stmt stmt) {
@@ -255,5 +264,9 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             return text;
         }
         return object.toString();
+    }
+
+    private static class BreakException extends RuntimeException {
+
     }
 }

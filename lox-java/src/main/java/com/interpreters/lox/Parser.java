@@ -7,12 +7,13 @@ import java.util.List;
  * program        → declaration* EOF ;
  * declaration    → varDecl | statement;
  * valDecl        → "var" IDENTIFIER (“=” expression)?";" ;
- * statement      → exprStmt | printStmt | ifStmt | whileStmt | forStmt | block ;
+ * statement      → exprStmt | printStmt | ifStmt | whileStmt | forStmt | breakStmt | block ;
  * exprStmt       → expression ";" ;
  * printStmt      → "print" expression ";" ;
  * ifStmt         → "if (" expression ") statement ("else" statement)?" ;
  * whileStmt      → "while ("  expression ")" statement;
  * forStmt        → "for ("  (valDecl | exprStmt | ";") expression? ";" expression? ")" statement;
+ * breakStmt      → "break;" ;
  * block          → "{" declaration* "}" ;
  * expression     → assignment ;
  * assignment     → identifier "=" assignment | comma ;
@@ -35,6 +36,7 @@ import java.util.List;
 public class Parser {
     private final List<Token> tokens;
     private int current = 0;
+    private int loopDepth = 0;
 
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
@@ -85,8 +87,19 @@ public class Parser {
             return whileStmt();
         } else if (match(TokenType.FOR)) {
             return forStmt();
+        } else if (match(TokenType.BREAK)) {
+            return breakStmt();
         }
         return expressionStatement();
+    }
+
+    // breakStmt      → "break;" ;
+    private Stmt breakStmt() {
+        if (loopDepth == 0) {
+            error(previous(), "Must be inside a loop to use 'break'.");
+        }
+        consume(TokenType.SEMICOLON, "Expect ';' after break.");
+        return new Stmt.Break();
     }
 
     // forStmt        → "for ("  (valDecl | exprStmt | ";") expression? ";" expression? ")" statement;
@@ -110,18 +123,23 @@ public class Parser {
             increment = expression();
         }
         consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses.");
-        Stmt body = statement();
-        if (increment != null) {
-            body = new Stmt.Block(List.of(body, new Stmt.Expression(increment)));
-        }
-        if (condition == null) {
-            condition = new Expr.Literal(true);
-        }
-        Stmt whileStmt = new Stmt.While(condition, body);
-        if (init == null) {
-            return whileStmt;
-        } else {
-            return new Stmt.Block(List.of(init, whileStmt));
+        try {
+            loopDepth++;
+            Stmt body = statement();
+            if (increment != null) {
+                body = new Stmt.Block(List.of(body, new Stmt.Expression(increment)));
+            }
+            if (condition == null) {
+                condition = new Expr.Literal(true);
+            }
+            Stmt whileStmt = new Stmt.While(condition, body);
+            if (init == null) {
+                return whileStmt;
+            } else {
+                return new Stmt.Block(List.of(init, whileStmt));
+            }
+        } finally {
+            loopDepth--;
         }
     }
 
@@ -130,8 +148,13 @@ public class Parser {
         consume(TokenType.LEFT_PAREN, "Expect '(' after while.");
         Expr condition = expression();
         consume(TokenType.RIGHT_PAREN, "Expect ')' after while condition");
-        Stmt body = statement();
-        return new Stmt.While(condition, body);
+        try {
+            loopDepth++;
+            Stmt body = statement();
+            return new Stmt.While(condition, body);
+        } finally {
+            loopDepth--;
+        }
     }
 
     // ifStmt         → "if (" expression ") statement ("else" statement)?" ;

@@ -33,11 +33,16 @@ class LoxTest {
         code = """
                 var a = 0;
                 var temp;
+                var count = 0;
                 
                 for (var b = 1; a < 10000; b = temp + b) {
                   print a;
                   temp = a;
                   a = b;
+                  count = count +1;
+                  if(count > 10) {
+                   break;
+                  }
                 }
                 """;
         Lox.run(code);

@@ -16,6 +16,8 @@ public abstract class Stmt {
 
 		R visitWhileStmt(While stmt);
 
+		R visitBreakStmt(Break stmt);
+
 	}
 
 
@@ -149,6 +151,18 @@ public abstract class Stmt {
 
 		public Stmt getBody() {
 			return body;
+		}
+
+	}
+
+	public static class Break extends Stmt {
+
+		public Break() {
+		}
+
+		@Override
+		public <R> R accept(Visitor<R> visitor) {
+			return visitor.visitBreakStmt(this);
 		}
 
 	}
