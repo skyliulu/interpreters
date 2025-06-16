@@ -7,9 +7,10 @@ import java.util.List;
  * program        → declaration* EOF ;
  * declaration    → varDecl | statement;
  * valDecl        → "var" IDENTIFIER (“=” expression)?";" ;
- * statement      → exprStmt | printStmt | block ;
+ * statement      → exprStmt | printStmt | ifStmt | block ;
  * exprStmt       → expression ";" ;
  * printStmt      → "print" expression ";" ;
+ * ifStmt         → "if (" expression ") statement ("else" statement)?" ;
  * block          → "{" declaration* "}" ;
  * expression     → assignment ;
  * assignment     → identifier "=" assignment | comma ;
@@ -68,16 +69,31 @@ public class Parser {
         return new Stmt.Var(token, initialize);
     }
 
-    // statement      → exprStmt | printStmt | block ;
+    // statement      → exprStmt | printStmt | ifStmt | block ;
     private Stmt statement() {
         if (match(TokenType.PRINT)) {
             return printStatement();
         } else if (match(TokenType.LEFT_BRACE)) {
             return block();
+        } else if (match(TokenType.IF)) {
+            return ifStmt();
         }
         return expressionStatement();
     }
 
+    // ifStmt         → "if (" expression ") statement ("else" statement)?" ;
+    private Stmt ifStmt() {
+        consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.");
+        Expr condition = expression();
+        consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.");
+        Stmt thenBranch = statement(), elseBranch = null;
+        if (match(TokenType.ELSE)) {
+            elseBranch = statement();
+        }
+        return new Stmt.If(condition, thenBranch, elseBranch);
+    }
+
+    // block          → "{" declaration* "}" ;
     private Stmt block() {
         List<Stmt> stmts = new ArrayList<>();
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {

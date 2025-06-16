@@ -12,6 +12,8 @@ public abstract class Stmt {
 
 		R visitBlockStmt(Block stmt);
 
+		R visitIfStmt(If stmt);
+
 	}
 
 
@@ -91,6 +93,36 @@ public abstract class Stmt {
 
 		public List<Stmt> getStatements() {
 			return statements;
+		}
+
+	}
+
+	public static class If extends Stmt {
+		private final Expr condition;
+		private final Stmt thenStatement;
+		private final Stmt elseStatement;
+
+		public If(Expr condition, Stmt thenStatement, Stmt elseStatement) {
+			this.condition = condition;
+			this.thenStatement = thenStatement;
+			this.elseStatement = elseStatement;
+		}
+
+		@Override
+		public <R> R accept(Visitor<R> visitor) {
+			return visitor.visitIfStmt(this);
+		}
+
+		public Expr getCondition() {
+			return condition;
+		}
+
+		public Stmt getThenStatement() {
+			return thenStatement;
+		}
+
+		public Stmt getElseStatement() {
+			return elseStatement;
 		}
 
 	}

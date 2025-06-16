@@ -152,7 +152,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitBlockStmt(Stmt.Block stmt) {
-        if( null == stmt.getStatements() || stmt.getStatements().isEmpty()) {
+        if (null == stmt.getStatements() || stmt.getStatements().isEmpty()) {
             return null;
         }
         Environment previous = this.environment;
@@ -161,6 +161,16 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             stmt.getStatements().forEach(this::execute);
         } finally {
             this.environment = previous;
+        }
+        return null;
+    }
+
+    @Override
+    public Void visitIfStmt(Stmt.If stmt) {
+        if (isTruthy(evaluate(stmt.getCondition()))) {
+            execute(stmt.getThenStatement());
+        } else {
+            execute(stmt.getElseStatement());
         }
         return null;
     }
