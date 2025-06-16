@@ -28,6 +28,7 @@ public class Environment {
         }
         if (enclosing != null) {
             enclosing.assign(name, value);
+            return;
         }
         throw new RuntimeError(name, "Undefined variable '" + name.getLexeme() + "'.");
     }
@@ -39,6 +40,7 @@ public class Environment {
             if (uninitialized == value) {
                 throw new RuntimeError(name, "Variable must be initialized before use.");
             }
+            return value;
         }
         if (null != enclosing) {
             return enclosing.get(name);

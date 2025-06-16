@@ -69,7 +69,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     @Override
     public String visitVarStmt(Stmt.Var stmt) {
-        return String.format("var %s%s;", stmt.getName().getLexeme(), print(stmt.getInitializer()));
+        return String.format("var %s%s;", stmt.getName().getLexeme(), stmt.getInitializer() == null ? "" : " = " + print(stmt.getInitializer()));
     }
 
     @Override

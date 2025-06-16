@@ -7,11 +7,12 @@ import java.util.List;
  * program        → declaration* EOF ;
  * declaration    → varDecl | statement;
  * valDecl        → "var" IDENTIFIER (“=” expression)?";" ;
- * statement      → exprStmt | printStmt | ifStmt | whileStmt | block ;
+ * statement      → exprStmt | printStmt | ifStmt | whileStmt | forStmt | block ;
  * exprStmt       → expression ";" ;
  * printStmt      → "print" expression ";" ;
  * ifStmt         → "if (" expression ") statement ("else" statement)?" ;
- * whileStmt      → "while ("  expression ") statement;
+ * whileStmt      → "while ("  expression ")" statement;
+ * forStmt        → "for ("  (valDecl | exprStmt | ";") expression? ";" expression? ")" statement;
  * block          → "{" declaration* "}" ;
  * expression     → assignment ;
  * assignment     → identifier "=" assignment | comma ;
@@ -72,7 +73,7 @@ public class Parser {
         return new Stmt.Var(token, initialize);
     }
 
-    // statement      → exprStmt | printStmt | ifStmt | whileStmt | block ;
+    // statement      → exprStmt | printStmt | ifStmt | whileStmt | forStmt | block ;
     private Stmt statement() {
         if (match(TokenType.PRINT)) {
             return printStatement();
@@ -82,11 +83,49 @@ public class Parser {
             return ifStmt();
         } else if (match(TokenType.WHILE)) {
             return whileStmt();
+        } else if (match(TokenType.FOR)) {
+            return forStmt();
         }
         return expressionStatement();
     }
 
-    // whileStmt      → "while ("  expression ") statement;
+    // forStmt        → "for ("  (valDecl | exprStmt | ";") expression? ";" expression? ")" statement;
+    private Stmt forStmt() {
+        consume(TokenType.LEFT_PAREN, "Expect '(' after for.");
+        Stmt init;
+        if (match(TokenType.SEMICOLON)) {
+            init = null;
+        } else if (match(TokenType.VAR)) {
+            init = varDecl();
+        } else {
+            init = expressionStatement();
+        }
+        Expr condition = null;
+        if (!check(TokenType.SEMICOLON)) {
+            condition = expression();
+        }
+        consume(TokenType.SEMICOLON, "Expect ';' after loop condition");
+        Expr increment = null;
+        if (!check(TokenType.RIGHT_PAREN)) {
+            increment = expression();
+        }
+        consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses.");
+        Stmt body = statement();
+        if (increment != null) {
+            body = new Stmt.Block(List.of(body, new Stmt.Expression(increment)));
+        }
+        if (condition == null) {
+            condition = new Expr.Literal(true);
+        }
+        Stmt whileStmt = new Stmt.While(condition, body);
+        if (init == null) {
+            return whileStmt;
+        } else {
+            return new Stmt.Block(List.of(init, whileStmt));
+        }
+    }
+
+    // whileStmt      → "while ("  expression ")" statement;
     private Stmt whileStmt() {
         consume(TokenType.LEFT_PAREN, "Expect '(' after while.");
         Expr condition = expression();
