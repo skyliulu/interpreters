@@ -15,7 +15,7 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     @Override
     public String visitAssignmentExpr(Expr.Assignment expr) {
-        return "";
+        return expr.getName().getLexeme() + "=" + print(expr.getValue());
     }
 
     @Override
@@ -49,12 +49,12 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     @Override
     public String visitVariableExpr(Expr.Variable expr) {
-        return "";
+        return expr.getName().getLexeme();
     }
 
     @Override
     public String visitLogicalExpr(Expr.Logical expr) {
-        return "";
+        return String.format("%s %s %s", print(expr.getLeft()), expr.getOperator().getLexeme(), print(expr.getRight()));
     }
 
     @Override
@@ -69,17 +69,23 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     @Override
     public String visitVarStmt(Stmt.Var stmt) {
-        return "";
+        return String.format("var %s%s;", stmt.getName().getLexeme(), print(stmt.getInitializer()));
     }
 
     @Override
     public String visitBlockStmt(Stmt.Block stmt) {
-        return "";
+        return String.format("{\n%s\n}", print(stmt.getStatements()));
     }
 
     @Override
     public String visitIfStmt(Stmt.If stmt) {
-        return "";
+        if (stmt.getElseStatement() != null) {
+            return String.format("if (%s)\n\t%s\nelse\n\t%s", print(stmt.getCondition())
+                    , print(List.of(stmt.getThenStatement())), print(List.of(stmt.getElseStatement())));
+        } else {
+
+            return String.format("if (%s)\n\t%s", print(stmt.getCondition()), print(List.of(stmt.getThenStatement())));
+        }
     }
 
     private String parenthesize(String name, Expr... exprs) {
