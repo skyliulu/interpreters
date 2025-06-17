@@ -10,13 +10,14 @@ import java.util.List;
  * *  function    → IDENTIFIER "(" parameters? ")" block;
  * * * parameters → IDENTIFIER ("," IDENTIFIER)*；
  * valDecl        → "var" IDENTIFIER (“=” expression)?";" ;
- * statement      → exprStmt | printStmt | ifStmt | whileStmt | forStmt | breakStmt | block ;
+ * statement      → exprStmt | printStmt | ifStmt | whileStmt | forStmt | returnStmt | breakStmt | block ;
  * exprStmt       → expression ";" ;
  * printStmt      → "print" expression ";" ;
  * ifStmt         → "if (" expression ") statement ("else" statement)?" ;
  * whileStmt      → "while ("  expression ")" statement;
  * forStmt        → "for ("  (valDecl | exprStmt | ";") expression? ";" expression? ")" statement;
  * breakStmt      → "break;" ;
+ * returnStmt     → "return" expression? ";" ;
  * block          → "{" declaration* "}" ;
  * expression     → assignment ;
  * assignment     → identifier "=" assignment | comma ;
@@ -105,7 +106,7 @@ public class Parser {
         return new Stmt.Var(token, initialize);
     }
 
-    // statement      → exprStmt | printStmt | ifStmt | whileStmt | forStmt | block ;
+    // statement      → exprStmt | printStmt | ifStmt | whileStmt | forStmt | breakStmt | returnStmt | block ;
     private Stmt statement() {
         if (match(TokenType.PRINT)) {
             return printStatement();
@@ -119,8 +120,21 @@ public class Parser {
             return forStmt();
         } else if (match(TokenType.BREAK)) {
             return breakStmt();
+        } else if (match(TokenType.RETURN)) {
+            return returnStmt();
         }
         return expressionStatement();
+    }
+
+    // returnStmt     → "return" expression? ";" ;
+    private Stmt returnStmt() {
+        Token keyword = previous();
+        Expr value = null;
+        if (!check(TokenType.SEMICOLON)) {
+            value = expression();
+        }
+        consume(TokenType.SEMICOLON, "Expect ';' after return value.");
+        return new Stmt.Return(keyword, value);
     }
 
     // breakStmt      → "break;" ;

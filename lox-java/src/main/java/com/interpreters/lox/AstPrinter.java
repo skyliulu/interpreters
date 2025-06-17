@@ -111,6 +111,11 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
                 , print(stmt.getBody()));
     }
 
+    @Override
+    public String visitReturnStmt(Stmt.Return stmt) {
+        return "return " + (stmt.getValue() == null ? ";" : print(stmt.getValue()) + ";");
+    }
+
     private String parenthesize(String name, Expr... exprs) {
         StringBuilder builder = new StringBuilder();
         builder.append("(").append(name);

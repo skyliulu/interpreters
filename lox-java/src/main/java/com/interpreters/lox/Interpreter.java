@@ -242,6 +242,15 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return null;
     }
 
+    @Override
+    public Void visitReturnStmt(Stmt.Return stmt) {
+        Object value = null;
+        if (stmt.getValue() != null) {
+            value = evaluate(stmt.getValue());
+        }
+        throw new Return(value);
+    }
+
     public void executeBlock(List<Stmt> body, Environment environment) {
         Environment previous = this.environment;
         try {

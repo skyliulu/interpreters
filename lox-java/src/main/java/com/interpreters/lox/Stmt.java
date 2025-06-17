@@ -20,6 +20,8 @@ public abstract class Stmt {
 
 		R visitFunctionStmt(Function stmt);
 
+		R visitReturnStmt(Return stmt);
+
 	}
 
 
@@ -195,6 +197,30 @@ public abstract class Stmt {
 
 		public List<Stmt> getBody() {
 			return body;
+		}
+
+	}
+
+	public static class Return extends Stmt {
+		private final Token keyword;
+		private final Expr value;
+
+		public Return(Token keyword, Expr value) {
+			this.keyword = keyword;
+			this.value = value;
+		}
+
+		@Override
+		public <R> R accept(Visitor<R> visitor) {
+			return visitor.visitReturnStmt(this);
+		}
+
+		public Token getKeyword() {
+			return keyword;
+		}
+
+		public Expr getValue() {
+			return value;
 		}
 
 	}
