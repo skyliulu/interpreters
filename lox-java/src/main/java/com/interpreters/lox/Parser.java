@@ -5,7 +5,10 @@ import java.util.List;
 
 /**
  * program        → declaration* EOF ;
- * declaration    → varDecl | statement;
+ * declaration    → funDecl | varDecl | statement;
+ * funDecl       → "fun" function
+ * *  function    → IDENTIFIER "(" parameters? ")" block;
+ * * * parameters → IDENTIFIER ("," IDENTIFIER)*；
  * valDecl        → "var" IDENTIFIER (“=” expression)?";" ;
  * statement      → exprStmt | printStmt | ifStmt | whileStmt | forStmt | breakStmt | block ;
  * exprStmt       → expression ";" ;
@@ -52,10 +55,12 @@ public class Parser {
         return stmts;
     }
 
-    // declaration    → varDecl | statement;
+    // declaration    → funDecl | varDecl | statement;
     private Stmt declaration() {
         try {
-            if (match(TokenType.VAR)) {
+            if (match(TokenType.FUN)) {
+                return funDecl("function");
+            } else if (match(TokenType.VAR)) {
                 return varDecl();
             } else {
                 return statement();
@@ -64,6 +69,29 @@ public class Parser {
             synchronize();
             return null;
         }
+    }
+
+    /**
+     * funDecl       → "fun" function
+     * *  function    → IDENTIFIER "(" parameters? ")" block;
+     * * * parameters → IDENTIFIER ("," IDENTIFIER)*；
+     */
+    private Stmt.Function funDecl(String kind) {
+        Token name = consume(TokenType.IDENTIFIER, "Expect " + kind + " name,");
+        consume(TokenType.LEFT_PAREN, "Expect '(' after " + kind + " name.");
+        List<Token> parmas = new ArrayList<>();
+        if (!check(TokenType.RIGHT_PAREN)) {
+            do {
+                if (parmas.size() >= 255) {
+                    error(peek(), "Can't have more than 255 parameters.");
+                }
+                parmas.add(consume(TokenType.IDENTIFIER, "Expect parameter name."));
+            } while (match(TokenType.COMMA));
+        }
+        consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
+        consume(TokenType.LEFT_BRACE, "Expect '{' before " + kind + " body.");
+        Stmt.Block body = block();
+        return new Stmt.Function(name, parmas, body.getStatements());
     }
 
     // valDecl        → "var" IDENTIFIER (“=” expression)?";" ;
@@ -172,7 +200,7 @@ public class Parser {
     }
 
     // block          → "{" declaration* "}" ;
-    private Stmt block() {
+    private Stmt.Block block() {
         List<Stmt> stmts = new ArrayList<>();
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
             stmts.add(declaration());
@@ -326,12 +354,13 @@ public class Parser {
 
     private Expr finishCall(Expr expr) {
         List<Expr> arguments = new ArrayList<>();
-        if (check(TokenType.RIGHT_PAREN)) {
+        if (!check(TokenType.RIGHT_PAREN)) {
             do {
                 if (arguments.size() >= 255) {
                     error(peek(), "Can't have more than 255 augments.");
                 }
-                arguments.add(expression());
+                // should use higher precedence than comma
+                arguments.add(ternary());
             } while (match(TokenType.COMMA));
         }
         Token paren = consume(TokenType.RIGHT_PAREN, "Expect ')' after augments.");

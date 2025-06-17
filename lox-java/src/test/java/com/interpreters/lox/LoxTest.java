@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.*;
 class LoxTest {
 
     @Test
-    void testRun() {
-        String code = """
+    void testScopeValue() {
+        Lox.run("""
                 var a = "global a";
                 var b = "global b";
                 var c = "global c";
@@ -28,9 +28,12 @@ class LoxTest {
                 print a;
                 print b;
                 print c;
-                """;
-        Lox.run(code);
-        code = """
+                """);
+    }
+
+    @Test
+    void testLoop() {
+        Lox.run("""
                 var a = 0;
                 var temp;
                 var count = 0;
@@ -44,7 +47,16 @@ class LoxTest {
                    break;
                   }
                 }
-                """;
-        Lox.run(code);
+                """);
+    }
+
+    @Test
+    void testFun() {
+        Lox.run("""
+                fun sayHi(first, last) {
+                  print "Hi, " + first + " " + last + "!";
+                }
+                sayHi("Dear", "Reader");
+                """);
     }
 }

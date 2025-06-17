@@ -104,6 +104,13 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         return "break;";
     }
 
+    @Override
+    public String visitFunctionStmt(Stmt.Function stmt) {
+        return String.format("fun %s(%s) {\n%s\n}", stmt.getName().getLexeme()
+                , stmt.getParams().stream().map(Token::getLexeme).collect(Collectors.joining(","))
+                , print(stmt.getBody()));
+    }
+
     private String parenthesize(String name, Expr... exprs) {
         StringBuilder builder = new StringBuilder();
         builder.append("(").append(name);

@@ -21,9 +21,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
             @Override
             public String toString() {
-                return "<native fn>";
+                return "<native fn clock>";
             }
         });
+    }
+
+    public Environment getGlobalEnv() {
+        return global;
     }
 
     public void interpret(Expr expr) {
@@ -200,13 +204,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         if (null == stmt.getStatements() || stmt.getStatements().isEmpty()) {
             return null;
         }
-        Environment previous = this.environment;
-        try {
-            this.environment = new Environment(previous);
-            stmt.getStatements().forEach(this::execute);
-        } finally {
-            this.environment = previous;
-        }
+        executeBlock(stmt.getStatements(), new Environment(environment));
         return null;
     }
 
@@ -235,6 +233,23 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Void visitBreakStmt(Stmt.Break stmt) {
         throw new BreakException();
+    }
+
+    @Override
+    public Void visitFunctionStmt(Stmt.Function stmt) {
+        LoxFunction function = new LoxFunction(stmt);
+        environment.define(stmt.getName().getLexeme(), function);
+        return null;
+    }
+
+    public void executeBlock(List<Stmt> body, Environment environment) {
+        Environment previous = this.environment;
+        try {
+            this.environment = environment;
+            body.forEach(this::execute);
+        } finally {
+            this.environment = previous;
+        }
     }
 
     private void execute(Stmt stmt) {

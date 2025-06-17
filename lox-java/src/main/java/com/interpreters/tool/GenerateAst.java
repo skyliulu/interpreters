@@ -33,7 +33,8 @@ public class GenerateAst {
                 "Block: List<Stmt> statements",
                 "If: Expr condition, Stmt thenStatement, Stmt elseStatement",
                 "While: Expr condition, Stmt body",
-                "Break: "
+                "Break: ",
+                "Function: Token name, List<Token> params, List<Stmt> body"
         ));
     }
 
