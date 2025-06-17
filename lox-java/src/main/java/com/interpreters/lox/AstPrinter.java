@@ -58,6 +58,12 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
+    public String visitCallExpr(Expr.Call expr) {
+        return String.format("%s(%s)", print(expr.getCallee()),
+                expr.getArguments().stream().map(this::print).collect(Collectors.joining(",")));
+    }
+
+    @Override
     public String visitExpressionStmt(Stmt.Expression stmt) {
         return print(stmt.getExpression()) + ";";
     }

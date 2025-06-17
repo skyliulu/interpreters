@@ -25,7 +25,9 @@ import java.util.List;
  * comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
  * term           → factor ( ( "-" | "+" ) factor )* ;
  * factor         → unary ( ( "/" | "*" ) unary )* ;
- * unary          → ( "!" | "-" ) unary | primary ;
+ * unary          → ( "!" | "-" ) unary | call ;
+ * call           → primary ("(" arguments? ")")* ;
+ * * arguments      → expression ("," expression )* ;
  * primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER
  * // error productions
  * | ( "!=" | "==" ) equality
@@ -302,14 +304,38 @@ public class Parser {
         return expr;
     }
 
-    // unary          → ( "!" | "-" ) unary | primary ;
+    // unary          → ( "!" | "-" ) unary | call ;
     private Expr unary() {
         if (match(TokenType.BANG, TokenType.MINUS)) {
             Token operator = previous();
             Expr right = unary();
             return new Expr.Unary(operator, right);
         }
-        return primary();
+        return call();
+    }
+
+    // call           → primary ("(" arguments? ")")* ;
+    // arguments      → expression ("," expression )* ;
+    private Expr call() {
+        Expr expr = primary();
+        while (match(TokenType.LEFT_PAREN)) {
+            expr = finishCall(expr);
+        }
+        return expr;
+    }
+
+    private Expr finishCall(Expr expr) {
+        List<Expr> arguments = new ArrayList<>();
+        if (check(TokenType.RIGHT_PAREN)) {
+            do {
+                if (arguments.size() >= 255) {
+                    error(peek(), "Can't have more than 255 augments.");
+                }
+                arguments.add(expression());
+            } while (match(TokenType.COMMA));
+        }
+        Token paren = consume(TokenType.RIGHT_PAREN, "Expect ')' after augments.");
+        return new Expr.Call(expr, paren, arguments);
     }
 
     /**
