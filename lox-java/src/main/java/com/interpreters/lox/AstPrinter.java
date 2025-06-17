@@ -64,6 +64,12 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
+    public String visitFunctionExpr(Expr.Function expr) {
+        return String.format("fun (%s) {\n%s\n}", expr.getParams().stream().map(Token::getLexeme).collect(Collectors.joining(","))
+                , print(expr.getBody()));
+    }
+
+    @Override
     public String visitExpressionStmt(Stmt.Expression stmt) {
         return print(stmt.getExpression()) + ";";
     }
@@ -107,8 +113,8 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     @Override
     public String visitFunctionStmt(Stmt.Function stmt) {
         return String.format("fun %s(%s) {\n%s\n}", stmt.getName().getLexeme()
-                , stmt.getParams().stream().map(Token::getLexeme).collect(Collectors.joining(","))
-                , print(stmt.getBody()));
+                , stmt.getFunction().getParams().stream().map(Token::getLexeme).collect(Collectors.joining(","))
+                , print(stmt.getFunction().getBody()));
     }
 
     @Override

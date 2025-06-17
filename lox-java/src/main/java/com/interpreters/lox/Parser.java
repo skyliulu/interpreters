@@ -32,7 +32,7 @@ import java.util.List;
  * unary          → ( "!" | "-" ) unary | call ;
  * call           → primary ("(" arguments? ")")* ;
  * * arguments      → expression ("," expression )* ;
- * primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER
+ * primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER | function
  * // error productions
  * | ( "!=" | "==" ) equality
  * | ( ">" | ">=" | "<" | "<=" ) comparison
@@ -59,7 +59,8 @@ public class Parser {
     // declaration    → funDecl | varDecl | statement;
     private Stmt declaration() {
         try {
-            if (match(TokenType.FUN)) {
+            if (check(TokenType.FUN) && checkNext(TokenType.IDENTIFIER)) {
+                consume(TokenType.FUN, null);
                 return funDecl("function");
             } else if (match(TokenType.VAR)) {
                 return varDecl();
@@ -79,6 +80,15 @@ public class Parser {
      */
     private Stmt.Function funDecl(String kind) {
         Token name = consume(TokenType.IDENTIFIER, "Expect " + kind + " name,");
+        return new Stmt.Function(name, lambdaFunc(kind));
+    }
+
+    /**
+     * funExpr       → "fun" function
+     * *  function    → "(" parameters? ")" block;
+     * * * parameters → IDENTIFIER ("," IDENTIFIER)*；
+     */
+    private Expr.Function lambdaFunc(String kind) {
         consume(TokenType.LEFT_PAREN, "Expect '(' after " + kind + " name.");
         List<Token> parmas = new ArrayList<>();
         if (!check(TokenType.RIGHT_PAREN)) {
@@ -92,7 +102,7 @@ public class Parser {
         consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
         consume(TokenType.LEFT_BRACE, "Expect '{' before " + kind + " body.");
         Stmt.Block body = block();
-        return new Stmt.Function(name, parmas, body.getStatements());
+        return new Expr.Function(parmas, body.getStatements());
     }
 
     // valDecl        → "var" IDENTIFIER (“=” expression)?";" ;
@@ -414,6 +424,9 @@ public class Parser {
         if (match(TokenType.IDENTIFIER)) {
             return new Expr.Variable(previous());
         }
+        if (match(TokenType.FUN)) {
+            return lambdaFunc("function");
+        }
         // error production
         if (match(TokenType.EQUAL_EQUAL, TokenType.BANG_EQUAL)) {
             error(previous(), "Missing left-hand operand");
@@ -486,6 +499,12 @@ public class Parser {
     private boolean check(TokenType type) {
         if (isAtEnd()) return false;
         return peek().getTokenType() == type;
+    }
+
+    private boolean checkNext(TokenType tokenType) {
+        if (isAtEnd()) return false;
+        if (tokens.get(current + 1).getTokenType() == TokenType.EOF) return false;
+        return tokens.get(current + 1).getTokenType() == tokenType;
     }
 
     private Token advance() {

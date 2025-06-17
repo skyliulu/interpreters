@@ -3,10 +3,16 @@ package com.interpreters.lox;
 import java.util.List;
 
 public class LoxFunction implements LoxCallable {
-    private final Stmt.Function declaration;
+    private final String name;
+    private final Expr.Function declaration;
     private final Environment closure;
 
-    public LoxFunction(Stmt.Function declaration, Environment closure) {
+    public LoxFunction(Expr.Function declaration, Environment closure) {
+        this(null, declaration, closure);
+    }
+
+    public LoxFunction(String name, Expr.Function declaration, Environment closure) {
+        this.name = name;
         this.declaration = declaration;
         this.closure = closure;
     }
@@ -32,6 +38,10 @@ public class LoxFunction implements LoxCallable {
 
     @Override
     public String toString() {
-        return String.format("<fn %s>", declaration.getName().getLexeme());
+        if (null == name) {
+            return "<fn>";
+        } else {
+            return String.format("<fn %s>", name);
+        }
     }
 }

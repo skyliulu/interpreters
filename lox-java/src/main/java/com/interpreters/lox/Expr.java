@@ -22,6 +22,8 @@ public abstract class Expr {
 
 		R visitCallExpr(Call expr);
 
+		R visitFunctionExpr(Function expr);
+
 	}
 
 
@@ -245,6 +247,30 @@ public abstract class Expr {
 
 		public List<Expr> getArguments() {
 			return arguments;
+		}
+
+	}
+
+	public static class Function extends Expr {
+		private final List<Token> params;
+		private final List<Stmt> body;
+
+		public Function(List<Token> params, List<Stmt> body) {
+			this.params = params;
+			this.body = body;
+		}
+
+		@Override
+		public <R> R accept(Visitor<R> visitor) {
+			return visitor.visitFunctionExpr(this);
+		}
+
+		public List<Token> getParams() {
+			return params;
+		}
+
+		public List<Stmt> getBody() {
+			return body;
 		}
 
 	}

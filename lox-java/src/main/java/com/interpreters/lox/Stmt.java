@@ -173,13 +173,11 @@ public abstract class Stmt {
 
 	public static class Function extends Stmt {
 		private final Token name;
-		private final List<Token> params;
-		private final List<Stmt> body;
+		private final Expr.Function function;
 
-		public Function(Token name, List<Token> params, List<Stmt> body) {
+		public Function(Token name, Expr.Function function) {
 			this.name = name;
-			this.params = params;
-			this.body = body;
+			this.function = function;
 		}
 
 		@Override
@@ -191,12 +189,8 @@ public abstract class Stmt {
 			return name;
 		}
 
-		public List<Token> getParams() {
-			return params;
-		}
-
-		public List<Stmt> getBody() {
-			return body;
+		public Expr.Function getFunction() {
+			return function;
 		}
 
 	}
