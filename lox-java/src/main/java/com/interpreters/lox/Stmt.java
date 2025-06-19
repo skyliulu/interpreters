@@ -160,13 +160,19 @@ public abstract class Stmt {
 	}
 
 	public static class Break extends Stmt {
+		private final Token keyword;
 
-		public Break() {
+		public Break(Token keyword) {
+			this.keyword = keyword;
 		}
 
 		@Override
 		public <R> R accept(Visitor<R> visitor) {
 			return visitor.visitBreakStmt(this);
+		}
+
+		public Token getKeyword() {
+			return keyword;
 		}
 
 	}

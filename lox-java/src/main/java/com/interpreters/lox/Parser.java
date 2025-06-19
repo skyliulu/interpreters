@@ -149,11 +149,12 @@ public class Parser {
 
     // breakStmt      → "break;" ;
     private Stmt breakStmt() {
+        Token keyword = previous();
         if (loopDepth == 0) {
-            error(previous(), "Must be inside a loop to use 'break'.");
+            error(keyword, "Must be inside a loop to use 'break'.");
         }
         consume(TokenType.SEMICOLON, "Expect ';' after break.");
-        return new Stmt.Break();
+        return new Stmt.Break(keyword);
     }
 
     // forStmt        → "for ("  (valDecl | exprStmt | ";") expression? ";" expression? ")" statement;
