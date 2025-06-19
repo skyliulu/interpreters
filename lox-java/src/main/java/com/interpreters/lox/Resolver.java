@@ -8,12 +8,38 @@ import java.util.Stack;
 
 public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private final Interpreter interpreter;
-    private final Stack<Map<String, Boolean>> scopes = new Stack<>();
+    private final Stack<Map<String, Variable>> scopes = new Stack<>();
     private FunctionType currentFunction = FunctionType.NONE;
     private boolean inLoop = false;
 
     private enum FunctionType {
         NONE, FUNCTION
+    }
+
+    private enum VariableState {
+        DECLARED, DEFINED, READ
+    }
+
+    private static class Variable {
+        private final Token name;
+        private VariableState state;
+
+        public Variable(Token name, VariableState state) {
+            this.name = name;
+            this.state = state;
+        }
+
+        public Token getName() {
+            return name;
+        }
+
+        public VariableState getState() {
+            return state;
+        }
+
+        public void setState(VariableState state) {
+            this.state = state;
+        }
     }
 
     public Resolver(Interpreter interpreter) {
@@ -23,7 +49,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     @Override
     public Void visitAssignmentExpr(Expr.Assignment expr) {
         resolve(expr.getValue());
-        resolveLocal(expr, expr.getName());
+        resolveLocal(expr, expr.getName(), false);
         return null;
     }
 
@@ -61,10 +87,11 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitVariableExpr(Expr.Variable expr) {
-        if (!scopes.isEmpty() && scopes.peek().get(expr.getName().getLexeme()) == Boolean.FALSE) {
+        if (!scopes.isEmpty() && scopes.peek().containsKey(expr.getName().getLexeme())
+                && scopes.peek().get(expr.getName().getLexeme()).getState() == VariableState.DECLARED) {
             Lox.error(expr.getName(), "Can't read local variable in its own initializer.");
         }
-        resolveLocal(expr, expr.getName());
+        resolveLocal(expr, expr.getName(), true);
         return null;
     }
 
@@ -178,10 +205,13 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         currentFunction = enclosing;
     }
 
-    private void resolveLocal(Expr expr, Token name) {
+    private void resolveLocal(Expr expr, Token name, boolean isRead) {
         for (int i = scopes.size() - 1; i >= 0; i--) {
             if (scopes.get(i).containsKey(name.getLexeme())) {
                 interpreter.resolve(expr, scopes.size() - 1 - i);
+                if (isRead) {
+                    scopes.get(i).get(name.getLexeme()).setState(VariableState.READ);
+                }
                 return;
             }
         }
@@ -191,12 +221,12 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         if (scopes.isEmpty()) {
             return;
         }
-        Map<String, Boolean> scope = scopes.peek();
+        Map<String, Variable> scope = scopes.peek();
         if (scope.containsKey(name.getLexeme())) {
             Lox.error(name, "Already a variable with this name in this scope.");
         }
         // variable is not ready
-        scope.put(name.getLexeme(), false);
+        scope.put(name.getLexeme(), new Variable(name, VariableState.DECLARED));
     }
 
     private void define(Token name) {
@@ -204,7 +234,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
             return;
         }
         // variable is ready
-        scopes.peek().put(name.getLexeme(), true);
+        scopes.peek().get(name.getLexeme()).setState(VariableState.DEFINED);
     }
 
     private void beginScope() {
@@ -212,7 +242,12 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     private void endScope() {
-        scopes.pop();
+        Map<String, Variable> scope = scopes.pop();
+        scope.forEach((k, v) -> {
+            if (v.getState() != VariableState.READ) {
+                Lox.error(v.getName(), "Local variable is not used.");
+            }
+        });
     }
 
     public void resolve(List<Stmt> statements) {
