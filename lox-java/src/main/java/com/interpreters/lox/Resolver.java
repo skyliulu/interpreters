@@ -10,7 +10,12 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private final Interpreter interpreter;
     private final Stack<Map<String, Variable>> scopes = new Stack<>();
     private FunctionType currentFunction = FunctionType.NONE;
+    private ClassType currentClass = ClassType.NONE;
     private boolean inLoop = false;
+
+    private enum ClassType {
+        NONE, CLASS
+    }
 
     private enum FunctionType {
         NONE, FUNCTION, METHOD
@@ -130,6 +135,16 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitThisExpr(Expr.This expr) {
+        if (currentClass == ClassType.NONE) {
+            Lox.error(expr.getKeyword(), "Can't use 'this' outside of class.");
+            return null;
+        }
+        resolveLocal(expr, expr.getKeyword(), true);
+        return null;
+    }
+
+    @Override
     public Void visitExpressionStmt(Stmt.Expression stmt) {
         resolve(stmt.getExpression());
         return null;
@@ -210,11 +225,15 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     public Void visitClassStmt(Stmt.Class stmt) {
         declare(stmt.getName());
         define(stmt.getName());
+        ClassType enclosing = currentClass;
+        currentClass = ClassType.CLASS;
+        beginScope();
+        scopes.peek().put("this", new Variable(stmt.getName(), VariableState.READ));
         stmt.getMethods().forEach(method -> {
-//            declare(method.getName());
-//            define(method.getName());
             resolveFunction(method.getFunction(), FunctionType.METHOD);
         });
+        endScope();
+        currentClass = enclosing;
         return null;
     }
 

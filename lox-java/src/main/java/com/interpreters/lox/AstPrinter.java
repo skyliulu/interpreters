@@ -80,6 +80,11 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
+    public String visitThisExpr(Expr.This expr) {
+        return "this";
+    }
+
+    @Override
     public String visitExpressionStmt(Stmt.Expression stmt) {
         return print(stmt.getExpression()) + ";";
     }

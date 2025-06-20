@@ -452,6 +452,9 @@ public class Parser {
         if (match(TokenType.FUN)) {
             return lambdaFunc("function");
         }
+        if (match(TokenType.THIS)) {
+            return new Expr.This(previous());
+        }
         // error production
         if (match(TokenType.EQUAL_EQUAL, TokenType.BANG_EQUAL)) {
             error(previous(), "Missing left-hand operand");

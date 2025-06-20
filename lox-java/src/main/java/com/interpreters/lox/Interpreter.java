@@ -227,6 +227,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Object visitThisExpr(Expr.This expr) {
+        return lookUpVariable(expr.getKeyword(), expr);
+    }
+
+    @Override
     public Void visitExpressionStmt(Stmt.Expression stmt) {
         evaluate(stmt.getExpression());
         return null;
