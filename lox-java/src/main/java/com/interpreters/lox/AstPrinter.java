@@ -70,6 +70,16 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
+    public String visitGetExpr(Expr.Get expr) {
+        return print(expr.getObject()) + "." + expr.getName().getLexeme();
+    }
+
+    @Override
+    public String visitSetExpr(Expr.Set expr) {
+        return print(expr.getObject()) + "." + expr.getName().getLexeme() + " = " + print(expr.getValue());
+    }
+
+    @Override
     public String visitExpressionStmt(Stmt.Expression stmt) {
         return print(stmt.getExpression()) + ";";
     }
@@ -120,6 +130,12 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     @Override
     public String visitReturnStmt(Stmt.Return stmt) {
         return "return " + (stmt.getValue() == null ? ";" : print(stmt.getValue()) + ";");
+    }
+
+    @Override
+    public String visitClassStmt(Stmt.Class stmt) {
+        return String.format("class %s{\n%s\n}", stmt.getName().getLexeme()
+                , stmt.getMethods().stream().map(f -> f.accept(this)).collect(Collectors.joining("\n")));
     }
 
     private String parenthesize(String name, Expr... exprs) {

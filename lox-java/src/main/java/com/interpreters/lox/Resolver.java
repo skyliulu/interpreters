@@ -13,7 +13,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private boolean inLoop = false;
 
     private enum FunctionType {
-        NONE, FUNCTION
+        NONE, FUNCTION, METHOD
     }
 
     private enum VariableState {
@@ -116,6 +116,20 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitGetExpr(Expr.Get expr) {
+        resolve(expr.getObject());
+        // properties are looked up dynamically, they don’t get resolved.
+        return null;
+    }
+
+    @Override
+    public Void visitSetExpr(Expr.Set expr) {
+        resolve(expr.getObject());
+        resolve(expr.getValue());
+        return null;
+    }
+
+    @Override
     public Void visitExpressionStmt(Stmt.Expression stmt) {
         resolve(stmt.getExpression());
         return null;
@@ -189,6 +203,18 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         if (null != stmt.getValue()) {
             resolve(stmt.getValue());
         }
+        return null;
+    }
+
+    @Override
+    public Void visitClassStmt(Stmt.Class stmt) {
+        declare(stmt.getName());
+        define(stmt.getName());
+        stmt.getMethods().forEach(method -> {
+//            declare(method.getName());
+//            define(method.getName());
+            resolveFunction(method.getFunction(), FunctionType.METHOD);
+        });
         return null;
     }
 

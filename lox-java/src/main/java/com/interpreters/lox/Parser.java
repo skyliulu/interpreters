@@ -5,8 +5,9 @@ import java.util.List;
 
 /**
  * program        → declaration* EOF ;
- * declaration    → funDecl | varDecl | statement;
- * funDecl       → "fun" function
+ * declaration    → classDecl | funDecl | varDecl | statement;
+ * classDecl      → "class" IDENTIFIER "{" function* "}"
+ * funDecl        → "fun" function
  * *  function    → IDENTIFIER "(" parameters? ")" block;
  * * * parameters → IDENTIFIER ("," IDENTIFIER)*；
  * valDecl        → "var" IDENTIFIER (“=” expression)?";" ;
@@ -20,7 +21,7 @@ import java.util.List;
  * returnStmt     → "return" expression? ";" ;
  * block          → "{" declaration* "}" ;
  * expression     → assignment ;
- * assignment     → identifier "=" assignment | comma ;
+ * assignment     → (call ".")? identifier "=" assignment | comma ;
  * comma          → ternary ( "," ternary )* ;
  * ternary        → logic_or ("?" expression ":" ternary)?;
  * logic_or       → logic_and ("or" logic_and)*;
@@ -30,8 +31,8 @@ import java.util.List;
  * term           → factor ( ( "-" | "+" ) factor )* ;
  * factor         → unary ( ( "/" | "*" ) unary )* ;
  * unary          → ( "!" | "-" ) unary | call ;
- * call           → primary ("(" arguments? ")")* ;
- * * arguments      → expression ("," expression )* ;
+ * call           → primary ("(" arguments? ") | "." IDENTIFIER ")* ;
+ * * arguments    → expression ("," expression )* ;
  * primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER | function
  * // error productions
  * | ( "!=" | "==" ) equality
@@ -56,10 +57,12 @@ public class Parser {
         return stmts;
     }
 
-    // declaration    → funDecl | varDecl | statement;
+    // declaration    → classDecl | funDecl | varDecl | statement;
     private Stmt declaration() {
         try {
-            if (check(TokenType.FUN) && checkNext(TokenType.IDENTIFIER)) {
+            if (match(TokenType.CLASS)) {
+                return classDecl();
+            } else if (check(TokenType.FUN) && checkNext(TokenType.IDENTIFIER)) {
                 consume(TokenType.FUN, null);
                 return funDecl("function");
             } else if (match(TokenType.VAR)) {
@@ -71,6 +74,18 @@ public class Parser {
             synchronize();
             return null;
         }
+    }
+
+    // classDecl      → "class" IDENTIFIER "{" function* "}"
+    private Stmt.Class classDecl() {
+        Token name = consume(TokenType.IDENTIFIER, "Expect class name.");
+        consume(TokenType.LEFT_BRACE, "Expect '{' after class name.");
+        List<Stmt.Function> functions = new ArrayList<>();
+        while (!check(TokenType.RIGHT_BRACE)) {
+            functions.add(funDecl("method"));
+        }
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after class body");
+        return new Stmt.Class(name, functions);
     }
 
     /**
@@ -253,7 +268,7 @@ public class Parser {
         return assignment();
     }
 
-    // assignment     → identifier "=" assignment | comma ;
+    // assignment     → (call ".")? identifier "=" assignment | comma ;
     private Expr assignment() {
         Expr expr = comma();
         if (match(TokenType.EQUAL)) {
@@ -262,6 +277,8 @@ public class Parser {
             // valid left expr
             if (expr instanceof Expr.Variable variable) {
                 return new Expr.Assignment(variable.getName(), value);
+            } else if (expr instanceof Expr.Get get) {
+                return new Expr.Set(get.getObject(), get.getName(), value);
             }
             error(equals, "Invalid assignment target.");
         }
@@ -367,12 +384,19 @@ public class Parser {
         return call();
     }
 
-    // call           → primary ("(" arguments? ")")* ;
+    // call           → primary ("(" arguments? ") | "." IDENTIFIER ")* ;
     // arguments      → expression ("," expression )* ;
     private Expr call() {
         Expr expr = primary();
-        while (match(TokenType.LEFT_PAREN)) {
-            expr = finishCall(expr);
+        while (true) {
+            if (match(TokenType.LEFT_PAREN)) {
+                expr = finishCall(expr);
+            } else if (match(TokenType.DOT)) {
+                Token name = consume(TokenType.IDENTIFIER, "Expect property name after '.'.");
+                expr = new Expr.Get(expr, name);
+            } else {
+                break;
+            }
         }
         return expr;
     }

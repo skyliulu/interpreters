@@ -109,7 +109,21 @@ class LoxTest {
                   showA();
                   var a = "block";
                   showA();
+                  print a;
                 }
+                """);
+    }
+
+    @Test
+    void testClass() {
+        Lox.run("""
+                class Bacon {
+                  eat() {
+                    print "Crunch crunch crunch!";
+                  }
+                }
+                
+                Bacon().eat();
                 """);
     }
 }

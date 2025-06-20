@@ -207,6 +207,26 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Object visitGetExpr(Expr.Get expr) {
+        Object object = evaluate(expr.getObject());
+        if (object instanceof LoxInstance loxInstance) {
+            return loxInstance.get(expr.getName());
+        }
+        throw new RuntimeError(expr.getName(), "Only instances have properties.");
+    }
+
+    @Override
+    public Object visitSetExpr(Expr.Set expr) {
+        Object object = evaluate(expr.getObject());
+        if (object instanceof LoxInstance loxInstance) {
+            Object value = evaluate(expr.getValue());
+            loxInstance.set(expr.getName(), value);
+            return value;
+        }
+        throw new RuntimeError(expr.getName(), "Only instances have properties.");
+    }
+
+    @Override
     public Void visitExpressionStmt(Stmt.Expression stmt) {
         evaluate(stmt.getExpression());
         return null;
@@ -279,6 +299,20 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             value = evaluate(stmt.getValue());
         }
         throw new Return(value);
+    }
+
+    @Override
+    public Void visitClassStmt(Stmt.Class stmt) {
+        // two-stage variable binding process allows references to the class inside its own methods.
+        environment.define(stmt.getName().getLexeme(), null);
+        Map<String, LoxFunction> methods = new HashMap<>();
+        stmt.getMethods().forEach(method -> {
+            LoxFunction function = new LoxFunction(method.getName().getLexeme(), method.getFunction(), environment);
+            methods.put(method.getName().getLexeme(), function);
+        });
+        LoxClass loxClass = new LoxClass(stmt.getName().getLexeme(), methods);
+        environment.assign(stmt.getName(), loxClass);
+        return null;
     }
 
     public void executeBlock(List<Stmt> body, Environment environment) {
