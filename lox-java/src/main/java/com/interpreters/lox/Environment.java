@@ -48,8 +48,8 @@ public class Environment {
         throw new RuntimeError(name, "Undefined variable '" + name.getLexeme() + "'.");
     }
 
-    public Object getAt(int distance, Token name) {
-        return ancestor(distance).values.get(name.getLexeme());
+    public Object getAt(int distance, String name) {
+        return ancestor(distance).values.get(name);
     }
 
     public void assignAt(int distance, Token name, Object value) {

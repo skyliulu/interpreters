@@ -18,7 +18,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     private enum FunctionType {
-        NONE, FUNCTION, METHOD
+        NONE, FUNCTION, METHOD, INITIALIZER
     }
 
     private enum VariableState {
@@ -216,6 +216,9 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
             Lox.error(stmt.getKeyword(), "Can't return from top-level code.");
         }
         if (null != stmt.getValue()) {
+            if (currentFunction == FunctionType.INITIALIZER) {
+                Lox.error(stmt.getKeyword(), "Can't return a value from an initializer.");
+            }
             resolve(stmt.getValue());
         }
         return null;
@@ -230,7 +233,9 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         beginScope();
         scopes.peek().put("this", new Variable(stmt.getName(), VariableState.READ));
         stmt.getMethods().forEach(method -> {
-            resolveFunction(method.getFunction(), FunctionType.METHOD);
+            FunctionType functionType = method.getName().getLexeme().equals("init") ?
+                    FunctionType.INITIALIZER : FunctionType.METHOD;
+            resolveFunction(method.getFunction(), functionType);
         });
         endScope();
         currentClass = enclosing;

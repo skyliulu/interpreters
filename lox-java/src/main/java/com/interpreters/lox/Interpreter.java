@@ -36,7 +36,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     private Object lookUpVariable(Token name, Expr expr) {
         Integer distance = locals.get(expr);
         if (distance != null) {
-            return environment.getAt(distance, name);
+            return environment.getAt(distance, name.getLexeme());
         } else {
             return global.get(name);
         }
@@ -203,7 +203,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Object visitFunctionExpr(Expr.Function expr) {
-        return new LoxFunction(expr, environment);
+        return new LoxFunction(expr, environment, false);
     }
 
     @Override
@@ -292,7 +292,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitFunctionStmt(Stmt.Function stmt) {
-        LoxFunction function = new LoxFunction(stmt.getName().getLexeme(), stmt.getFunction(), environment);
+        LoxFunction function = new LoxFunction(stmt.getName().getLexeme(), stmt.getFunction(), environment, false);
         environment.define(stmt.getName().getLexeme(), function);
         return null;
     }
@@ -312,7 +312,8 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         environment.define(stmt.getName().getLexeme(), null);
         Map<String, LoxFunction> methods = new HashMap<>();
         stmt.getMethods().forEach(method -> {
-            LoxFunction function = new LoxFunction(method.getName().getLexeme(), method.getFunction(), environment);
+            LoxFunction function = new LoxFunction(method.getName().getLexeme(), method.getFunction(), environment
+                    , method.getName().getLexeme().equals("init"));
             methods.put(method.getName().getLexeme(), function);
         });
         LoxClass loxClass = new LoxClass(stmt.getName().getLexeme(), methods);

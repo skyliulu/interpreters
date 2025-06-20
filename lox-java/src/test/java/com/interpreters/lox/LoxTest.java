@@ -137,5 +137,20 @@ class LoxTest {
                 cake.flavor = "German chocolate";
                 cake.taste();
                 """);
+
+        Lox.run("""
+                class Cake {
+                  init(a) {
+                    this.flavor = a;
+                  }
+                  taste() {
+                    var adjective = "delicious";
+                    print "The " + this.flavor + " cake is " + adjective + "!";
+                  }
+                }
+                
+                var cake = Cake("German chocolate");
+                cake.taste();
+                """);
     }
 }
