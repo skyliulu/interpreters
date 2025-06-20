@@ -4,11 +4,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class LoxClass implements LoxCallable {
+public class LoxClass extends LoxInstance implements LoxCallable {
     private final String name;
     private final Map<String, LoxFunction> methods = new HashMap<>();
 
-    public LoxClass(String name, Map<String, LoxFunction> methods) {
+    public LoxClass(LoxClass metaClass, String name, Map<String, LoxFunction> methods) {
+        super(metaClass);
         this.name = name;
         this.methods.putAll(methods);
     }

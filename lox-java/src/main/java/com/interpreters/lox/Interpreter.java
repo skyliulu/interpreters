@@ -310,13 +310,20 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Void visitClassStmt(Stmt.Class stmt) {
         // two-stage variable binding process allows references to the class inside its own methods.
         environment.define(stmt.getName().getLexeme(), null);
+        Map<String, LoxFunction> classMethods = new HashMap<>();
+        for (Stmt.Function method : stmt.getClassMethods()) {
+            LoxFunction function = new LoxFunction(method.getName().getLexeme(), method.getFunction(), environment, false);
+            classMethods.put(method.getName().getLexeme(), function);
+        }
+        LoxClass metaClass = new LoxClass(null, stmt.getName().getLexeme() + "metaclass", classMethods);
+
         Map<String, LoxFunction> methods = new HashMap<>();
         stmt.getMethods().forEach(method -> {
             LoxFunction function = new LoxFunction(method.getName().getLexeme(), method.getFunction(), environment
                     , method.getName().getLexeme().equals("init"));
             methods.put(method.getName().getLexeme(), function);
         });
-        LoxClass loxClass = new LoxClass(stmt.getName().getLexeme(), methods);
+        LoxClass loxClass = new LoxClass(metaClass, stmt.getName().getLexeme(), methods);
         environment.assign(stmt.getName(), loxClass);
         return null;
     }

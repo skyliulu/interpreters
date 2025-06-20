@@ -81,11 +81,13 @@ public class Parser {
         Token name = consume(TokenType.IDENTIFIER, "Expect class name.");
         consume(TokenType.LEFT_BRACE, "Expect '{' after class name.");
         List<Stmt.Function> functions = new ArrayList<>();
+        List<Stmt.Function> classFuncs = new ArrayList<>();
         while (!check(TokenType.RIGHT_BRACE)) {
-            functions.add(funDecl("method"));
+            boolean isClassMethod = match(TokenType.CLASS);
+            (isClassMethod ? classFuncs : functions).add(funDecl("method"));
         }
         consume(TokenType.RIGHT_BRACE, "Expect '}' after class body");
-        return new Stmt.Class(name, functions);
+        return new Stmt.Class(name, functions, classFuncs);
     }
 
     /**

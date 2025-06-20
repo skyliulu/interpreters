@@ -40,7 +40,7 @@ public class GenerateAst {
                 "Break: Token keyword",
                 "Function: Token name, Expr.Function function",
                 "Return: Token keyword, Expr value",
-                "Class: Token name, List<Stmt.Function> methods"
+                "Class: Token name, List<Stmt.Function> methods, List<Stmt.Function> classMethods"
         ));
     }
 

@@ -153,4 +153,17 @@ class LoxTest {
                 cake.taste();
                 """);
     }
+
+    @Test
+    void testMetaClass() {
+        Lox.run("""
+                class Math {
+                  class square(n) {
+                    return n * n;
+                  }
+                }
+                
+                print Math.square(3);
+                """);
+    }
 }

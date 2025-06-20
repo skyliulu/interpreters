@@ -139,8 +139,13 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     @Override
     public String visitClassStmt(Stmt.Class stmt) {
-        return String.format("class %s{\n%s\n}", stmt.getName().getLexeme()
-                , stmt.getMethods().stream().map(f -> f.accept(this)).collect(Collectors.joining("\n")));
+        return String.format("class %s{\n%s\n%s\n}", stmt.getName().getLexeme()
+                , stmt.getClassMethods().isEmpty() ? "" : "class " + printMethod(stmt.getClassMethods())
+                , printMethod(stmt.getMethods()));
+    }
+
+    private String printMethod(List<Stmt.Function> functions) {
+        return functions.stream().map(f -> f.accept(this)).collect(Collectors.joining("\n"));
     }
 
     private String parenthesize(String name, Expr... exprs) {
