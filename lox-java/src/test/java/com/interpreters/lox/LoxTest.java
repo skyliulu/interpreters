@@ -166,4 +166,29 @@ class LoxTest {
                 print Math.square(3);
                 """);
     }
+
+    @Test
+    void testSuper() {
+        Lox.run("""
+                class A {
+                  method() {
+                    print "A method";
+                  }
+                }
+                
+                class B < A {
+                  method() {
+                    print "B method";
+                  }
+                
+                  test() {
+                    super.method();
+                  }
+                }
+                
+                class C < B {}
+                
+                C().test();
+                """);
+    }
 }

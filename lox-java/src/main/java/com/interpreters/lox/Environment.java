@@ -17,6 +17,10 @@ public class Environment {
         this.enclosing = enclosing;
     }
 
+    public Environment getEnclosing() {
+        return enclosing;
+    }
+
     public void define(String name, Object value) {
         values.put(name, null == value ? uninitialized : value);
     }

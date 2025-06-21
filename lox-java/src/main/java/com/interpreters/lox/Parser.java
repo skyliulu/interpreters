@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * program        → declaration* EOF ;
  * declaration    → classDecl | funDecl | varDecl | statement;
- * classDecl      → "class" IDENTIFIER "{" function* "}"
+ * classDecl      → "class" IDENTIFIER ("<" IDENTIFIER)? "{" function* "}"
  * funDecl        → "fun" function
  * *  function    → IDENTIFIER "(" parameters? ")" block;
  * * * parameters → IDENTIFIER ("," IDENTIFIER)*；
@@ -76,9 +76,14 @@ public class Parser {
         }
     }
 
-    // classDecl      → "class" IDENTIFIER "{" function* "}"
+    // classDecl      → "class" IDENTIFIER ("<" IDENTIFIER)? "{" function* "}"
     private Stmt.Class classDecl() {
         Token name = consume(TokenType.IDENTIFIER, "Expect class name.");
+        Expr.Variable superClass = null;
+        if (match(TokenType.LESS)) {
+            Token superName = consume(TokenType.IDENTIFIER, "Expect super class name.");
+            superClass = new Expr.Variable(superName);
+        }
         consume(TokenType.LEFT_BRACE, "Expect '{' after class name.");
         List<Stmt.Function> functions = new ArrayList<>();
         List<Stmt.Function> classFuncs = new ArrayList<>();
@@ -87,7 +92,7 @@ public class Parser {
             (isClassMethod ? classFuncs : functions).add(funDecl("method"));
         }
         consume(TokenType.RIGHT_BRACE, "Expect '}' after class body");
-        return new Stmt.Class(name, functions, classFuncs);
+        return new Stmt.Class(name, superClass, functions, classFuncs);
     }
 
     /**
@@ -419,7 +424,7 @@ public class Parser {
     }
 
     /**
-     * primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | identifier
+     * primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | identifier | "this" | "super""."identifier
      * | ( "!=" | "==" ) equality
      * | ( ">" | ">=" | "<" | "<=" ) comparison
      * | "+" term
@@ -456,6 +461,12 @@ public class Parser {
         }
         if (match(TokenType.THIS)) {
             return new Expr.This(previous());
+        }
+        if (match(TokenType.SUPER)) {
+            Token keyword = previous();
+            consume(TokenType.DOT, "Expect '.' after 'super'.");
+            Token method = consume(TokenType.IDENTIFIER, "Expect superclass method name.");
+            return new Expr.Super(keyword, method);
         }
         // error production
         if (match(TokenType.EQUAL_EQUAL, TokenType.BANG_EQUAL)) {

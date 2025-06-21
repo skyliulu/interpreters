@@ -14,7 +14,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private boolean inLoop = false;
 
     private enum ClassType {
-        NONE, CLASS
+        NONE, CLASS, SUBCLASS
     }
 
     private enum FunctionType {
@@ -145,6 +145,17 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitSuperExpr(Expr.Super expr) {
+        if (currentClass == ClassType.NONE) {
+            Lox.error(expr.getKeyword(), "Can't use 'super' outside of a class.");
+        } else if (currentClass != ClassType.SUBCLASS) {
+            Lox.error(expr.getKeyword(), "Can't use 'super' in a class with no superclass.");
+        }
+        resolveLocal(expr, expr.getKeyword(), true);
+        return null;
+    }
+
+    @Override
     public Void visitExpressionStmt(Stmt.Expression stmt) {
         resolve(stmt.getExpression());
         return null;
@@ -228,8 +239,23 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     public Void visitClassStmt(Stmt.Class stmt) {
         declare(stmt.getName());
         define(stmt.getName());
+
+        if (stmt.getSuperclass() != null) {
+            if (stmt.getSuperclass().getName().getLexeme().equals(stmt.getName().getLexeme())) {
+                Lox.error(stmt.getName(), "A class can't inherit from itself.");
+            }
+            // Lox allows class declarations even inside blocks,
+            // so it’s possible the superclass name refers to a local variable.
+            // In that case, we need to make sure it’s resolved.
+            resolve(stmt.getSuperclass());
+            // Before we can get to creating the environment at runtime,
+            // we need to handle the corresponding scope chain in the resolver
+            beginScope();
+            scopes.peek().put("super", new Variable(stmt.getSuperclass().getName(), VariableState.READ));
+        }
+
         ClassType enclosing = currentClass;
-        currentClass = ClassType.CLASS;
+        currentClass = stmt.getSuperclass() == null ? ClassType.CLASS : ClassType.SUBCLASS;
         beginScope();
         scopes.peek().put("this", new Variable(stmt.getName(), VariableState.READ));
         stmt.getMethods().forEach(method -> {
@@ -244,6 +270,9 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
             endScope();
         });
         endScope();
+        if (null != stmt.getSuperclass()) {
+            endScope();
+        }
         currentClass = enclosing;
         return null;
     }

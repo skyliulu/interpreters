@@ -229,11 +229,13 @@ public abstract class Stmt {
 
 	public static class Class extends Stmt {
 		private final Token name;
+		private final Expr.Variable superclass;
 		private final List<Stmt.Function> methods;
 		private final List<Stmt.Function> classMethods;
 
-		public Class(Token name, List<Stmt.Function> methods, List<Stmt.Function> classMethods) {
+		public Class(Token name, Expr.Variable superclass, List<Stmt.Function> methods, List<Stmt.Function> classMethods) {
 			this.name = name;
+			this.superclass = superclass;
 			this.methods = methods;
 			this.classMethods = classMethods;
 		}
@@ -245,6 +247,10 @@ public abstract class Stmt {
 
 		public Token getName() {
 			return name;
+		}
+
+		public Expr.Variable getSuperclass() {
+			return superclass;
 		}
 
 		public List<Stmt.Function> getMethods() {

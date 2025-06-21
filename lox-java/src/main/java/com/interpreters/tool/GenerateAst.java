@@ -28,7 +28,8 @@ public class GenerateAst {
                 "Function : List<Token> params, List<Stmt> body",
                 "Get      : Expr object, Token name",
                 "Set      : Expr object, Token name, Expr value",
-                "This     : Token keyword"
+                "This     : Token keyword",
+                "Super    : Token keyword, Token method"
         ));
         defineAst(outputDir, "Stmt", Arrays.asList(
                 "Expression : Expr expression",
@@ -40,7 +41,7 @@ public class GenerateAst {
                 "Break: Token keyword",
                 "Function: Token name, Expr.Function function",
                 "Return: Token keyword, Expr value",
-                "Class: Token name, List<Stmt.Function> methods, List<Stmt.Function> classMethods"
+                "Class: Token name, Expr.Variable superclass, List<Stmt.Function> methods, List<Stmt.Function> classMethods"
         ));
     }
 

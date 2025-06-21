@@ -85,6 +85,11 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
+    public String visitSuperExpr(Expr.Super expr) {
+        return "super." + expr.getMethod().getLexeme();
+    }
+
+    @Override
     public String visitExpressionStmt(Stmt.Expression stmt) {
         return print(stmt.getExpression()) + ";";
     }
@@ -139,7 +144,8 @@ public class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     @Override
     public String visitClassStmt(Stmt.Class stmt) {
-        return String.format("class %s{\n%s\n%s\n}", stmt.getName().getLexeme()
+        return String.format("class %s{\n%s\n%s\n}"
+                , stmt.getSuperclass() == null ? stmt.getName().getLexeme() : (stmt.getName().getLexeme() + " < " + stmt.getSuperclass().getName().getLexeme())
                 , stmt.getClassMethods().isEmpty() ? "" : "class " + printMethod(stmt.getClassMethods())
                 , printMethod(stmt.getMethods()));
     }
